@@ -1,21 +1,17 @@
-from docx import Document
-from pdf2image import convert_from_path
-import pytesseract
-import cv2
-import numpy as np
+import fitz  # PyMuPDF
+import docx
 
-def extract_text(file):
-    if file.name.endswith(".docx"):
-        return extract_text_from_word(file)
-    elif file.name.endswith(".pdf"):
-        return extract_text_from_pdf(file)
-    else:
-        return []
+def extract_text_from_pdf(file):
+    doc = fitz.open(stream=file.read(), filetype="pdf")
+    return "\n".join(page.get_text() for page in doc)
 
-def extract_text_from_word(doc_file):
-    # Your existing Word text extractor code
-    pass
+def extract_text_from_docx(file):
+    d = docx.Document(file)
+    return "\n".join(p.text for p in d.paragraphs)
 
-def extract_text_from_pdf(file, lang='eng', max_pages=5):
-    # Your PDF OCR code
-    pass
+def extract_metadata(file):
+    # Return dummy metadata for now
+    return {"Filename": file.name, "Type": file.type}
+
+def compare_metadata(meta1, meta2):
+    return {key: (meta1.get(key), meta2.get(key)) for key in set(meta1) | set(meta2)}
