@@ -1,9 +1,16 @@
 import streamlit as st
+from dotenv import load_dotenv
+import os
 from utils import (
     file_handler, text_extraction, ocr, text_comparison,
     entity_analysis, table_extraction, summarizer,
     voice_tone, exporter
 )
+
+
+load_dotenv()  # load environment variables from .env
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 st.title("Document Comparison Tool")
 
