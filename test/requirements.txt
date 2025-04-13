@@ -1,0 +1,8 @@
+streamlit
+pytest
+pytesseract
+spacy
+pdfplumber
+camelot-py
+openai
+# Add any other dependencies you use
