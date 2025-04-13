@@ -1,27 +1,56 @@
 import streamlit as st
 from utils import (
-    text_extraction,
-    table_comparison,
-    text_comparison,
-    entity_analysis,
-    summarizer,
-    file_exporter
+    file_handler, text_extraction, ocr, text_comparison,
+    entity_analysis, table_extraction, summarizer,
+    voice_tone, exporter
 )
-from config import OPENAI_API_KEY
 
-# Example usage
-st.title("📝 Document Comparator")
+st.title("Document Comparison Tool")
 
-# File uploads
-old_file = st.file_uploader("Upload Old Document", type=["docx", "pdf"])
-new_file = st.file_uploader("Upload New Document", type=["docx", "pdf"])
+# Upload Section
+file1 = st.file_uploader("Upload Document 1", type=["pdf", "docx"])
+file2 = st.file_uploader("Upload Document 2", type=["pdf", "docx"])
 
-if old_file and new_file:
-    # Extract text
-    old_text = text_extraction.extract_text(old_file)
-    new_text = text_extraction.extract_text(new_file)
+if file1 and file2:
+    text1, meta1 = file_handler.process_file(file1)
+    text2, meta2 = file_handler.process_file(file2)
 
-    # Show diff
-    text_comparison.compare_side_by_side(old_text, new_text)
+    # Display metadata comparison
+    st.subheader("Metadata Comparison")
+    st.json(text_extraction.compare_metadata(meta1, meta2))
 
-    # Table comparisons, summaries, etc.
+    # OCR fallback
+    if not text1:
+        text1 = ocr.ocr_pdf(file1)
+    if not text2:
+        text2 = ocr.ocr_pdf(file2)
+
+    # Text Comparison
+    st.subheader("Text Differences")
+    diffs = text_comparison.get_differences(text1, text2)
+    st.markdown(diffs, unsafe_allow_html=True)
+
+    # Entity Analysis
+    st.subheader("Entity Differences")
+    entities = entity_analysis.compare_entities(text1, text2)
+    st.json(entities)
+
+    # Table Comparison
+    st.subheader("Table Differences")
+    table_diffs = table_extraction.compare_tables(file1, file2)
+    st.json(table_diffs)
+
+    # Voice Tone
+    st.subheader("Voice Tone Comparison")
+    tones = voice_tone.compare_tones(text1, text2)
+    st.json(tones)
+
+    # Summary
+    st.subheader("AI Summary")
+    summary = summarizer.generate_summary(text1, text2)
+    st.write(summary)
+
+    # Export
+    if st.button("Export Results"):
+        docx_file = exporter.export_to_docx(diffs, entities, table_diffs, tones, summary)
+        st.download_button("Download Report", docx_file, "comparison_report.docx")
